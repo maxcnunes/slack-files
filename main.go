@@ -134,6 +134,7 @@ func main() {
 		*query = ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpg;.jpeg;.json"
 	}
 
+	fileIds := make(map[string]bool)
 	var files files
 
 	queries := strings.Split(*query, ";")
@@ -151,7 +152,12 @@ func main() {
 			paging = data.Files.Paging.Pages > data.Files.Paging.Page
 			page = data.Files.Paging.Page + 1
 
-			files = append(files, data.Files.Matches...)
+			for _, file := range data.Files.Matches {
+				if _, ok := fileIds[file.ID]; !ok {
+					files = append(files, file)
+					fileIds[file.ID] = true
+				}
+			}
 
 			if data.Files.Paging.Pages > 1 {
 				if data.Files.Paging.Page == 1 {
