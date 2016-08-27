@@ -93,8 +93,8 @@ func floatToString(num float64) string {
 	return strconv.FormatFloat(num, 'f', 2, 64)
 }
 
-func getHumanSize(file File) string {
-	size := float64(file.Size)
+func getHumanSize(fileSize int) string {
+	size := float64(fileSize)
 
 	humanSize := floatToString(size) + " B"
 	size = size / 1024
@@ -167,7 +167,10 @@ func main() {
 
 	sort.Sort(sort.Reverse(files))
 
+	totalSize := 0
 	for _, file := range files {
-		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file)), white(file.Name))
+		totalSize += file.Size
+		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
+	fmt.Printf("  %s => %s\n", cyan(getHumanSize(totalSize)), white("Total"))
 }
