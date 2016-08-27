@@ -8,8 +8,8 @@ If you don't have budget to pay for a slack account you probably will need start
 
 ### Options
 
-* **--query**: Search query. May contain booleans, etc.
-* **--token**: Slack Authentication token (Requires scope: search:read).
+* * **--token**: Slack Authentication token (Requires scope: search:read).
+* **--query**: Search query. Accept multiple values separated by ";".
 
 ## Development
 
