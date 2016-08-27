@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -68,6 +69,12 @@ type FilesAPIResponse struct {
 	}
 }
 
+type files []File
+
+func (f files) Len() int           { return len(f) }
+func (f files) Less(i, j int) bool { return f[i].Size < f[j].Size }
+func (f files) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
+
 func getFiles(token *string, query string, page int) (*FilesAPIResponse, error) {
 	resp, err := http.Get(baseURL + "?token=" + *token + "&query=" + query + "&page=" + strconv.Itoa(page))
 	if err != nil {
@@ -127,7 +134,7 @@ func main() {
 		*query = ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpg;.jpeg;.json"
 	}
 
-	var files []File
+	var files files
 
 	queries := strings.Split(*query, ";")
 	for _, q := range queries {
@@ -157,6 +164,8 @@ func main() {
 
 		fmt.Printf("\n")
 	}
+
+	sort.Sort(sort.Reverse(files))
 
 	for _, file := range files {
 		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file)), white(file.Name))
