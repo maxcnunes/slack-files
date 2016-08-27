@@ -26,7 +26,7 @@ type File struct {
 	Title              string
 	Mimetype           string
 	Filetype           string
-	PrettyType         string
+	PrettyType         string `json:"pretty_type"`
 	User               string
 	Editable           bool
 	Size               int
@@ -131,10 +131,12 @@ func main() {
 	}
 
 	if *query == "" {
-		*query = ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpg;.jpeg;.json"
+		*query = ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpeg;.json"
 	}
 
 	fileIds := make(map[string]bool)
+	totalSize := 0
+	sizeByTypes := make(map[string]int)
 	var files files
 
 	queries := strings.Split(*query, ";")
@@ -156,6 +158,8 @@ func main() {
 				if _, ok := fileIds[file.ID]; !ok {
 					files = append(files, file)
 					fileIds[file.ID] = true
+					sizeByTypes[file.PrettyType] += file.Size
+					totalSize += file.Size
 				}
 			}
 
@@ -173,10 +177,13 @@ func main() {
 
 	sort.Sort(sort.Reverse(files))
 
-	totalSize := 0
 	for _, file := range files {
-		totalSize += file.Size
 		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
+
 	fmt.Printf("  %s => %s\n", cyan(getHumanSize(totalSize)), white("Total"))
+
+	for name, size := range sizeByTypes {
+		fmt.Printf("  %s => %s\n", cyan(getHumanSize(size)), white("Total "+name))
+	}
 }
