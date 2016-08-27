@@ -8,7 +8,7 @@ If you don't have budget to pay for a slack account you probably will need start
 
 ### Options
 
-* * **--token**: Slack Authentication token (Requires scope: search:read).
+* **--token**: Slack Authentication token (Requires scope: search:read).
 * **--query**: Search query. Accept multiple values separated by ";".
 
 ## Development
@@ -26,3 +26,9 @@ Using [goxc](https://github.com/laher/goxc).
 ```bash
 goxc
 ```
+
+## TODO
+
+* Delete files by date
+* Delete files by size
+* Confirm deletion
