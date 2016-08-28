@@ -88,12 +88,15 @@ func (f files) Len() int           { return len(f) }
 func (f files) Less(i, j int) bool { return f[i].Size < f[j].Size }
 func (f files) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
 
-func getFilesPerPage(token *string, query string, page int) (*FilesAPIResponse, error) {
+func getFilesPerPage(token *string, types string, query string, page int) (*FilesAPIResponse, error) {
 	var url string
 	if query != "" {
 		url = baseURLSearch + "?token=" + *token + "&query=" + query + "&page=" + strconv.Itoa(page)
 	} else {
 		url = baseURLList + "?token=" + *token + "&page=" + strconv.Itoa(page)
+		if types != "" {
+			url += "&types=" + types
+		}
 	}
 
 	resp, err := http.Get(url)
@@ -116,7 +119,7 @@ func getFilesPerPage(token *string, query string, page int) (*FilesAPIResponse, 
 	return &FilesAPIResponse{OK: data.OK, Paging: data.Files.Paging, Files: data.Files.Matches}, nil
 }
 
-func getFiles(token *string, query string) (files, error) {
+func getFiles(token *string, types string, query string) (files, error) {
 	page := 1
 	paging := true
 
@@ -129,7 +132,7 @@ func getFiles(token *string, query string) (files, error) {
 	}
 
 	for paging {
-		data, err := getFilesPerPage(token, query, page)
+		data, err := getFilesPerPage(token, types, query, page)
 		if err != nil {
 			return nil, err
 		}
@@ -206,7 +209,7 @@ func main() {
 	var allFiles files
 
 	if *types != "" {
-		result, err := getFiles(token, "")
+		result, err := getFiles(token, *types, "")
 		fmt.Println(len(result))
 		if err != nil {
 			panic(err)
@@ -220,7 +223,7 @@ func main() {
 			continue
 		}
 
-		result, err := getFiles(token, q)
+		result, err := getFiles(token, "", q)
 		if err != nil {
 			panic(err)
 		}
