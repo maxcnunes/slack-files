@@ -1,5 +1,7 @@
 # slack-files
 
+**Control over the Slack files clean up**
+
 If you don't have budget to pay for a slack account you probably will need starting to delete files once you get the storage out of space. This CLI is just a simple solution to help find out the largest files in your account.
 
 ### Download
@@ -33,3 +35,4 @@ goxc
 * Delete files by date
 * Delete files by size
 * Confirm deletion
+* Show total size by types
