@@ -210,7 +210,6 @@ func main() {
 
 	if *types != "" {
 		result, err := getFiles(token, *types, "")
-		fmt.Println(len(result))
 		if err != nil {
 			panic(err)
 		}
@@ -243,11 +242,13 @@ func main() {
 	// Sort files by size and print result
 	sort.Sort(sort.Reverse(uniqFiles))
 
+	color.Magenta("Found %d files", len(uniqFiles))
 	for _, file := range uniqFiles {
 		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
 
-	fmt.Printf("\n  %s => %s\n", cyan(getHumanSize(totalSize)), white("Total"))
+	color.Magenta("Summary: Total")
+	fmt.Printf("  %s", cyan(getHumanSize(totalSize)))
 
 	// Sort types by size and print result
 	var listSizeByTypes files
@@ -257,7 +258,8 @@ func main() {
 
 	sort.Sort(sort.Reverse(listSizeByTypes))
 
+	color.Magenta("\nSummary: Total size by types")
 	for _, file := range listSizeByTypes {
-		fmt.Printf("  %s => %s\n", cyan(getHumanSize(file.Size)), white("Total "+file.Name))
+		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
 }
