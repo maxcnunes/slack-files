@@ -237,15 +237,24 @@ func main() {
 		}
 	}
 
+	// Sort files by size and print result
 	sort.Sort(sort.Reverse(uniqFiles))
 
 	for _, file := range uniqFiles {
 		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
 
-	fmt.Printf("  %s => %s\n", cyan(getHumanSize(totalSize)), white("Total"))
+	fmt.Printf("\n  %s => %s\n", cyan(getHumanSize(totalSize)), white("Total"))
 
+	// Sort types by size and print result
+	var listSizeByTypes files
 	for name, size := range sizeByTypes {
-		fmt.Printf("  %s => %s\n", cyan(getHumanSize(size)), white("Total "+name))
+		listSizeByTypes = append(listSizeByTypes, File{Size: size, Name: name})
+	}
+
+	sort.Sort(sort.Reverse(listSizeByTypes))
+
+	for _, file := range listSizeByTypes {
+		fmt.Printf("  %s => %s\n", cyan(getHumanSize(file.Size)), white("Total "+file.Name))
 	}
 }
