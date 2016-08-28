@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	baseURL = "https://slack.com/api/search.files"
+	baseURLSearch = "https://slack.com/api/search.files"
+	baseURLList   = "https://slack.com/api/files.list"
 )
 
 // File ...
@@ -44,8 +45,8 @@ type File struct {
 	CommentsCount      int
 }
 
-// FilesAPIResponse ...
-type FilesAPIResponse struct {
+// FilesSearchAPIResponse ...
+type FilesSearchAPIResponse struct {
 	OK           bool
 	Query        string
 	AllStopWords bool
@@ -69,24 +70,87 @@ type FilesAPIResponse struct {
 	}
 }
 
+// FilesAPIResponse ...
+type FilesAPIResponse struct {
+	OK     bool
+	Files  []File
+	Paging struct {
+		Count int
+		Total int
+		Page  int
+		Pages int
+	}
+}
+
 type files []File
 
 func (f files) Len() int           { return len(f) }
 func (f files) Less(i, j int) bool { return f[i].Size < f[j].Size }
 func (f files) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
 
-func getFiles(token *string, query string, page int) (*FilesAPIResponse, error) {
-	resp, err := http.Get(baseURL + "?token=" + *token + "&query=" + query + "&page=" + strconv.Itoa(page))
+func getFilesPerPage(token *string, query string, page int) (*FilesAPIResponse, error) {
+	var url string
+	if query != "" {
+		url = baseURLSearch + "?token=" + *token + "&query=" + query + "&page=" + strconv.Itoa(page)
+	} else {
+		url = baseURLList + "?token=" + *token + "&page=" + strconv.Itoa(page)
+	}
+
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	data := &FilesAPIResponse{}
+	if query == "" {
+		data := &FilesAPIResponse{}
+		dec := json.NewDecoder(resp.Body)
+		dec.Decode(data)
+		return data, nil
+	}
+
+	data := &FilesSearchAPIResponse{}
 	dec := json.NewDecoder(resp.Body)
 	dec.Decode(data)
 
-	return data, nil
+	return &FilesAPIResponse{OK: data.OK, Paging: data.Files.Paging, Files: data.Files.Matches}, nil
+}
+
+func getFiles(token *string, query string) (files, error) {
+	page := 1
+	paging := true
+
+	var files files
+
+	if query == "" {
+		fmt.Print("Fetching files.")
+	} else {
+		fmt.Printf("Fetching files by searching them with query %s.", query)
+	}
+
+	for paging {
+		data, err := getFilesPerPage(token, query, page)
+		if err != nil {
+			return nil, err
+		}
+
+		files = append(files, data.Files...)
+
+		paging = data.Paging.Pages > data.Paging.Page
+		page = data.Paging.Page + 1
+
+		if data.Paging.Pages > 1 {
+			if data.Paging.Page == 1 {
+				fmt.Printf(" Total pages: %d ", data.Paging.Pages)
+			}
+
+			fmt.Printf(".")
+		}
+	}
+
+	fmt.Printf("\n")
+
+	return files, nil
 }
 
 func floatToString(num float64) string {
@@ -122,7 +186,8 @@ func main() {
 	white := color.New(color.FgWhite).SprintFunc()
 
 	token := flag.String("token", "", "Slack Authentication token.")
-	query := flag.String("query", "", "Search query. Accept multiple values separated by \";\".")
+	query := flag.String("query", "", "Search query. Accept multiple values separated by \",\".")
+	types := flag.String("types", "", "Filter files by type. Accept multiple values separated by \",\".")
 	flag.Parse()
 
 	if *token == "" {
@@ -130,54 +195,51 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *query == "" {
+	if *types == "" && *query == "" {
 		*query = ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpeg;.json"
 	}
 
 	fileIds := make(map[string]bool)
 	totalSize := 0
 	sizeByTypes := make(map[string]int)
-	var files files
+	var uniqFiles files
+	var allFiles files
 
-	queries := strings.Split(*query, ";")
-	for _, q := range queries {
-		page := 1
-		paging := true
-
-		fmt.Printf("Fetching files with query %s", q)
-		for paging {
-			data, err := getFiles(token, q, page)
-			if err != nil {
-				panic(err)
-			}
-
-			paging = data.Files.Paging.Pages > data.Files.Paging.Page
-			page = data.Files.Paging.Page + 1
-
-			for _, file := range data.Files.Matches {
-				if _, ok := fileIds[file.ID]; !ok {
-					files = append(files, file)
-					fileIds[file.ID] = true
-					sizeByTypes[file.PrettyType] += file.Size
-					totalSize += file.Size
-				}
-			}
-
-			if data.Files.Paging.Pages > 1 {
-				if data.Files.Paging.Page == 1 {
-					fmt.Printf(" Total pages: %d ", data.Files.Paging.Pages)
-				}
-
-				fmt.Printf(".")
-			}
+	if *types != "" {
+		result, err := getFiles(token, "")
+		fmt.Println(len(result))
+		if err != nil {
+			panic(err)
 		}
-
-		fmt.Printf("\n")
+		allFiles = append(allFiles, result...)
 	}
 
-	sort.Sort(sort.Reverse(files))
+	queries := strings.Split(*query, ",")
+	for _, q := range queries {
+		if q == "" {
+			continue
+		}
 
-	for _, file := range files {
+		result, err := getFiles(token, q)
+		if err != nil {
+			panic(err)
+		}
+
+		allFiles = append(allFiles, result...)
+	}
+
+	for _, file := range allFiles {
+		if _, ok := fileIds[file.ID]; !ok {
+			uniqFiles = append(uniqFiles, file)
+			fileIds[file.ID] = true
+			sizeByTypes[file.PrettyType] += file.Size
+			totalSize += file.Size
+		}
+	}
+
+	sort.Sort(sort.Reverse(uniqFiles))
+
+	for _, file := range uniqFiles {
 		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
 

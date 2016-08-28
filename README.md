@@ -6,10 +6,11 @@ If you don't have budget to pay for a slack account you probably will need start
 
 [Releases](https://github.com/maxcnunes/slack-files/releases)
 
-### Options
+### Args
 
-* **--token**: Slack Authentication token (Requires scope: search:read).
-* **--query**: Search query. Accept multiple values separated by ";".
+* **--query [string]**: Search query. Accept multiple values separated by `,`.
+* **--token [string]**: Slack Authentication token.
+* **--types [string]**: Filter files by type. Accept multiple values separated by `,`.
 
 ## Development
 
