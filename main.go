@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 const (
 	baseURLSearch = "https://slack.com/api/search.files"
 	baseURLList   = "https://slack.com/api/files.list"
+	baseURLDelete = "https://slack.com/api/files.delete"
 )
 
 // File ...
@@ -73,6 +75,7 @@ type FilesSearchAPIResponse struct {
 // FilesAPIResponse ...
 type FilesAPIResponse struct {
 	OK     bool
+	Error  string
 	Files  []File
 	Paging struct {
 		Count int
@@ -120,6 +123,7 @@ func getFilesPerPage(token *string, types string, query string, page int) (*File
 }
 
 func getFiles(token *string, types string, query string) (files, error) {
+	cyan := color.New(color.FgCyan).SprintFunc()
 	page := 1
 	paging := true
 
@@ -147,13 +151,27 @@ func getFiles(token *string, types string, query string) (files, error) {
 				fmt.Printf(" Total pages: %d ", data.Paging.Pages)
 			}
 
-			fmt.Printf(".")
+			fmt.Print(cyan("."))
 		}
 	}
 
 	fmt.Printf("\n")
 
 	return files, nil
+}
+
+func deleteFile(token *string, file File) (*FilesAPIResponse, error) {
+	url := baseURLDelete + "?token=" + *token + "&file=" + file.ID
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	data := &FilesAPIResponse{}
+	dec := json.NewDecoder(resp.Body)
+	dec.Decode(data)
+	return data, nil
 }
 
 func floatToString(num float64) string {
@@ -244,11 +262,11 @@ func main() {
 
 	color.Magenta("Found %d files", len(uniqFiles))
 	for _, file := range uniqFiles {
-		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
+		fmt.Printf("  %s - %s (%s)\n", cyan(getHumanSize(file.Size)), file.Name, file.Permalink)
 	}
 
 	color.Magenta("Summary: Total")
-	fmt.Printf("  %s", cyan(getHumanSize(totalSize)))
+	fmt.Printf("  %s - %d Files", cyan(getHumanSize(totalSize)), len(uniqFiles))
 
 	// Sort types by size and print result
 	var listSizeByTypes files
@@ -262,4 +280,54 @@ func main() {
 	for _, file := range listSizeByTypes {
 		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("\nWould you like to delete those files?")
+	fmt.Printf("  %s No. Stop here.\n", cyan("1)"))
+	fmt.Printf("  %s Yes. Delete all them.\n", cyan("2)"))
+	fmt.Printf("  %s Yes. But ask me to confirm each one of them.\n", cyan("3)"))
+	fmt.Print("=> ")
+	answer, _ := reader.ReadString('\n')
+
+	if answer != "2\n" && answer != "3\n" {
+		color.Red("Stopping without delete any file.")
+		return
+	}
+
+	shouldAsk := answer == "3\n"
+	totalDeleted := 0
+	totalSizeDeleted := 0
+
+	for _, file := range uniqFiles {
+		if shouldAsk {
+			fmt.Printf("Delete file \"%s\" %s (%s)?\n", file.Name, cyan(getHumanSize(file.Size)), file.Permalink)
+			fmt.Printf("%s => ", cyan("(y/n)"))
+			answerFile, _ := reader.ReadString('\n')
+
+			if answerFile == "n\n" {
+				color.Blue("Skipped.")
+				continue
+			}
+		}
+
+		data, err := deleteFile(token, file)
+		if err != nil {
+			panic(err)
+		}
+
+		if !data.OK {
+			if shouldAsk {
+				color.Red("Error: %s", data.Error)
+			} else {
+				color.Red("Error deleting file \"%s\": %s", file.Name, data.Error)
+			}
+			continue
+		}
+		totalDeleted++
+		totalSizeDeleted += file.Size
+		color.Green("Deleted.")
+	}
+
+	color.Magenta("\nSummary: Deleted")
+	fmt.Printf("  %s - %d Files\n", cyan(getHumanSize(totalSizeDeleted)), totalDeleted)
 }
