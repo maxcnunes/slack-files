@@ -13,6 +13,7 @@ If you don't have budget to pay for a slack account you probably will need start
 * **--query [string]**: Search query. Accept multiple values separated by `,`.
 * **--token [string]**: Slack Authentication token.
 * **--types [string]**: Filter files by type. Accept multiple values separated by `,`.
+* **--backup [string]**: Path to backup files before delete.
 
 ## Development
 
@@ -34,4 +35,3 @@ goxc
 
 * Delete files by date
 * Delete files by size
-* Backup file locally before delete

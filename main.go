@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -41,7 +42,7 @@ type File struct {
 	DisplayAsBot       bool
 	Username           string
 	URLPrivate         string
-	URLPrivateDownload string
+	URLPrivateDownload string `json:"url_private_download"`
 	Permalink          string
 	PermalinkPublic    string
 	CommentsCount      int
@@ -202,6 +203,27 @@ func getHumanSize(fileSize int) string {
 	return floatToString(size) + " GB"
 }
 
+func downloadFile(token *string, backup string, file File) error {
+	out, err := os.Create(backup + "/" + file.ID + "___" + file.Name)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	color.Cyan("Downloading file \"%s\"", file.Name)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", file.URLPrivateDownload, nil)
+	req.Header.Set("Authorization", "Bearer "+*token)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
+
 func main() {
 	cyan := color.New(color.FgCyan).SprintFunc()
 	white := color.New(color.FgWhite).SprintFunc()
@@ -209,6 +231,7 @@ func main() {
 	token := flag.String("token", "", "Slack Authentication token.")
 	query := flag.String("query", "", "Search query. Accept multiple values separated by \",\".")
 	types := flag.String("types", "", "Filter files by type. Accept multiple values separated by \",\".")
+	backup := flag.String("backup", "", "Path to backup files before delete.")
 	flag.Parse()
 
 	if *token == "" {
@@ -294,6 +317,20 @@ func main() {
 		return
 	}
 
+	shouldBackup := *backup != ""
+
+	if !shouldBackup {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Println("\nBackup is not defined. Are you sure you will delete the files without backup?")
+		fmt.Printf("%s => ", cyan("(y/n)"))
+		answer, _ := reader.ReadString('\n')
+
+		if answer != "y\n" {
+			color.Red("Stopping without delete any file.")
+			return
+		}
+	}
+
 	shouldAsk := answer == "3\n"
 	totalDeleted := 0
 	totalSizeDeleted := 0
@@ -302,11 +339,18 @@ func main() {
 		if shouldAsk {
 			fmt.Printf("Delete file \"%s\" %s (%s)?\n", file.Name, cyan(getHumanSize(file.Size)), file.Permalink)
 			fmt.Printf("%s => ", cyan("(y/n)"))
-			answerFile, _ := reader.ReadString('\n')
+			answer, _ := reader.ReadString('\n')
 
-			if answerFile == "n\n" {
+			if answer == "n\n" {
 				color.Blue("Skipped.")
 				continue
+			}
+		}
+
+		if shouldBackup {
+			err := downloadFile(token, *backup, file)
+			if err != nil {
+				panic(err)
 			}
 		}
 
