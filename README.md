@@ -34,5 +34,4 @@ goxc
 
 * Delete files by date
 * Delete files by size
-* Confirm deletion
-* Show total size by types
+* Backup file locally before delete
