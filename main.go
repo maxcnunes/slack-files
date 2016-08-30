@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 )
@@ -92,7 +93,7 @@ func (f files) Len() int           { return len(f) }
 func (f files) Less(i, j int) bool { return f[i].Size < f[j].Size }
 func (f files) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
 
-func getFilesPerPage(token *string, types string, query string, page int) (*FilesAPIResponse, error) {
+func getFilesPerPage(token *string, types string, tsTo string, query string, page int) (*FilesAPIResponse, error) {
 	var url string
 	if query != "" {
 		url = baseURLSearch + "?token=" + *token + "&query=" + query + "&page=" + strconv.Itoa(page)
@@ -100,6 +101,9 @@ func getFilesPerPage(token *string, types string, query string, page int) (*File
 		url = baseURLList + "?token=" + *token + "&page=" + strconv.Itoa(page)
 		if types != "" {
 			url += "&types=" + types
+		}
+		if tsTo != "" {
+			url += "&ts_to=" + tsTo
 		}
 	}
 
@@ -123,7 +127,7 @@ func getFilesPerPage(token *string, types string, query string, page int) (*File
 	return &FilesAPIResponse{OK: data.OK, Paging: data.Files.Paging, Files: data.Files.Matches}, nil
 }
 
-func getFiles(token *string, types string, query string) (files, error) {
+func getFiles(token *string, types string, tsTo string, query string) (files, error) {
 	cyan := color.New(color.FgCyan).SprintFunc()
 	page := 1
 	paging := true
@@ -137,7 +141,7 @@ func getFiles(token *string, types string, query string) (files, error) {
 	}
 
 	for paging {
-		data, err := getFilesPerPage(token, types, query, page)
+		data, err := getFilesPerPage(token, types, tsTo, query, page)
 		if err != nil {
 			return nil, err
 		}
@@ -231,6 +235,7 @@ func main() {
 	token := flag.String("token", "", "Slack Authentication token.")
 	query := flag.String("query", "", "Search query. Accept multiple values separated by \",\".")
 	types := flag.String("types", "", "Filter files by type. Accept multiple values separated by \",\".")
+	daysTo := flag.Int("days-to", 0, "Filter files created before this timestamp (inclusive).")
 	backup := flag.String("backup", "", "Path to backup files before delete.")
 	flag.Parse()
 
@@ -243,6 +248,11 @@ func main() {
 		*query = ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpeg;.json"
 	}
 
+	var tsTo string
+	if *daysTo != 0 {
+		tsTo = strconv.FormatInt(time.Now().AddDate(0, 0, -*daysTo).UTC().Unix(), 10)
+	}
+
 	fileIds := make(map[string]bool)
 	totalSize := 0
 	sizeByTypes := make(map[string]int)
@@ -250,7 +260,7 @@ func main() {
 	var allFiles files
 
 	if *types != "" {
-		result, err := getFiles(token, *types, "")
+		result, err := getFiles(token, *types, tsTo, "")
 		if err != nil {
 			panic(err)
 		}
@@ -263,7 +273,7 @@ func main() {
 			continue
 		}
 
-		result, err := getFiles(token, "", q)
+		result, err := getFiles(token, "", "", q)
 		if err != nil {
 			panic(err)
 		}
