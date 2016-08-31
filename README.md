@@ -16,6 +16,24 @@ If you don't have budget to pay for a slack account you probably will need start
 * **--days-to [int]**: Filter files created before this timestamp (inclusive).
 * **--backup [string]**: Path to backup files before delete.
 
+#### Valid filter types
+
+* `all` - All files
+* `spaces` - Posts
+* `snippets` - Snippets
+* `images` - Image files
+* `gdocs` - Google docs
+* `zips` - Zip files
+* `pdfs` - PDF files
+
+> https://api.slack.com/methods/files.list
+
+#### Example filtering with query by multiple extensions
+
+```
+--query ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpeg;.json"
+```
+
 ## Development
 
 ```bash
