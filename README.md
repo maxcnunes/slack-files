@@ -33,7 +33,7 @@ But no worries. The CLI will ask you to confirm before deleting any file. Also i
 * **--days-to [int]**: Filter files created before this timestamp (inclusive).
 * **--backup [string]**: Path to backup files before delete.
 
-#### --types
+**--types**
 
 Valid types specified by Slack API https://api.slack.com/methods/files.list
 
@@ -45,12 +45,30 @@ Valid types specified by Slack API https://api.slack.com/methods/files.list
 * `zips` - Zip files
 * `pdfs` - PDF files
 
-#### --query
+#### Examples
 
-Example filtering with query by multiple extensions:
+**Filtering with query by multiple extensions**
 
+```bash
+--query ".rar,.tar,.zip,.mp3,.mp4,.pdf,.ppt,.csv,.jpeg,.json"
 ```
---query ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpeg;.json"
+
+**Filtering by files of all image types**
+
+```bash
+--types images
+```
+
+**Filtering by all files older than 30 days**
+
+```bash
+--days-to 30
+```
+
+**Filtering by files of all image types older than 30 days**
+
+```bash
+--types images --days-to 30
 ```
 
 ## Development
