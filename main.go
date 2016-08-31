@@ -293,6 +293,10 @@ func main() {
 		fmt.Printf("  %s - %s\n", cyan(getHumanSize(file.Size)), white(file.Name))
 	}
 
+	if len(uniqFiles) == 0 {
+		return
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("\nWould you like to delete those files?")
 	fmt.Printf("  %s No. Stop here.\n", cyan("1)"))
