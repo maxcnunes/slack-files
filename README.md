@@ -4,6 +4,8 @@
 
 If you don't have budget to pay for a slack account you probably will need starting to delete files once you get the storage out of space. This CLI is just a simple solution to help find out the largest files in your account.
 
+![](https://raw.githubusercontent.com/maxcnunes/slack-files/master/slack-files.png)
+
 **Important!**
 
 This CLI uses 2 different APIs to fetch the files from Slack.
