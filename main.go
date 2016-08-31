@@ -210,7 +210,13 @@ func main() {
 	types := flag.String("types", "", "Filter files by type. Accept multiple values separated by \",\".")
 	daysTo := flag.Int("days-to", 0, "Filter files created before this timestamp (inclusive).")
 	backup := flag.String("backup", "", "Path to backup files before delete.")
+	version := flag.Bool("version", false, "Version.")
 	flag.Parse()
+
+	if *version {
+		fmt.Println("v1.0.0")
+		os.Exit(0)
+	}
 
 	if *token == "" {
 		color.Red("Missing token")
