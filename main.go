@@ -25,28 +25,19 @@ const (
 // File ...
 type File struct {
 	ID                 string
-	Created            int
-	Timestamp          int
 	Name               string
-	Title              string
-	Mimetype           string
-	Filetype           string
 	PrettyType         string `json:"pretty_type"`
-	User               string
-	Editable           bool
 	Size               int
-	Mode               string
-	IsExternal         bool
-	ExternalType       string
-	IsPublic           bool
-	PublicURLShared    bool
-	DisplayAsBot       bool
-	Username           string
-	URLPrivate         string
 	URLPrivateDownload string `json:"url_private_download"`
 	Permalink          string
-	PermalinkPublic    string
-	CommentsCount      int
+}
+
+// Paging ...
+type Paging struct {
+	Count int
+	Total int
+	Page  int
+	Pages int
 }
 
 // FilesSearchAPIResponse ...
@@ -55,21 +46,8 @@ type FilesSearchAPIResponse struct {
 	Query        string
 	AllStopWords bool
 	Files        struct {
-		Total      int
-		Pagination struct {
-			TotalCount int
-			Page       int
-			PerPage    int
-			PageCount  int
-			First      int
-			Last       int
-		}
-		Paging struct {
-			Count int
-			Total int
-			Page  int
-			Pages int
-		}
+		Total   int
+		Paging  Paging
 		Matches []File
 	}
 }
@@ -79,12 +57,7 @@ type FilesAPIResponse struct {
 	OK     bool
 	Error  string
 	Files  []File
-	Paging struct {
-		Count int
-		Total int
-		Page  int
-		Pages int
-	}
+	Paging Paging
 }
 
 type files []File
