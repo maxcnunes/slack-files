@@ -6,17 +6,17 @@ If you don't have budget to pay for a slack account you probably will need start
 
 **Important!**
 
-> This CLI uses 2 differnt APIs to fetch the files from Slack.
-> On using the args:
->
-> --query: It will fetch the files from https://api.slack.com/methods/search.files
->
-> --types and --days-to: Will fetch from https://api.slack.com/methods/files.list
->
-> Although on using multiple args from different APIs it will gather the data.
-> It will not apply the criteria from one API to another.
-> For instance on filtering by query and days-to. The data from search.files API will not be filtered by the days.
-> This is a limitation I will keep this way at least initally to simplify the implementation of the CLI.
+This CLI uses 2 different APIs to fetch the files from Slack.
+On using the args:
+
+* `--query`: It will fetch the files from https://api.slack.com/methods/search.files
+* `--types` and `--days-to`: Will fetch from https://api.slack.com/methods/files.list
+
+Although on using multiple args from different APIs it will gather the data. It will not apply the criteria from one API to another.
+For instance on filtering by query and days-to. The data from search.files API will not be filtered by the days.
+This is a limitation I will keep this way at least initially to simplify the implementation of the CLI.
+
+But no worries. The CLI will ask you to confirm before deleting any file. Also is possible to backup the files.
 
 ### Download
 
@@ -31,7 +31,9 @@ If you don't have budget to pay for a slack account you probably will need start
 * **--days-to [int]**: Filter files created before this timestamp (inclusive).
 * **--backup [string]**: Path to backup files before delete.
 
-#### Valid filter types
+#### --types
+
+Valid types specified by Slack API https://api.slack.com/methods/files.list
 
 * `all` - All files
 * `spaces` - Posts
@@ -41,9 +43,9 @@ If you don't have budget to pay for a slack account you probably will need start
 * `zips` - Zip files
 * `pdfs` - PDF files
 
-> https://api.slack.com/methods/files.list
+#### --query
 
-#### Example filtering with query by multiple extensions
+Example filtering with query by multiple extensions:
 
 ```
 --query ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpeg;.json"
