@@ -217,8 +217,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *types == "" && *query == "" {
-		*query = ".rar;.tar;.zip;.mp3;.mp4;.pdf;.ppt;.csv;.jpeg;.json"
+	if *query == "" && *types == "" && *daysTo == 0 {
+		*types = "all"
 	}
 
 	var tsTo string
