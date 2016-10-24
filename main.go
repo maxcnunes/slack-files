@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -181,6 +182,10 @@ func getHumanSize(fileSize int) string {
 }
 
 func downloadFile(token *string, backup string, file File) error {
+	if file.URLPrivateDownload == "" {
+		return errors.New("URL for download not available " + file.Permalink)
+	}
+
 	out, err := os.Create(backup + "/" + file.ID + "___" + file.Name)
 	if err != nil {
 		return err
@@ -343,7 +348,8 @@ func main() {
 		if shouldBackup {
 			err := downloadFile(token, *backup, file)
 			if err != nil {
-				panic(err)
+				color.Red("Error: %v", err)
+				continue
 			}
 		}
 
